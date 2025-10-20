@@ -15,6 +15,13 @@ class ExcelReportController:
         self.report_service = ReportService()
         self.scheduler_service = SchedulerService()
         self.is_monitoring = False
+        self.email_callback = None  # Callback para envio de email
+    
+    def set_email_callback(self, callback_function):
+        """Define função de callback para envio automático de email"""
+        self.email_callback = callback_function
+        # Configurar callback no scheduler também
+        self.scheduler_service.set_email_callback(callback_function)
     
     def generate_manual_report(self):
         """Gera relatório manualmente (comando direto do usuário)"""

@@ -81,14 +81,22 @@ class SnapshotRepository:
             if record_count == 0:
                 return {}
             
-            if last_updated:
+            # Verifica se os dados são muito antigos usando o PostgreSQL (timezone-safe)
+            cursor.execute(f"""
+                SELECT COUNT(*) 
+                FROM {self.table_name}
+                WHERE updated_at > NOW() - INTERVAL '{max_age_hours} hours'
+            """)
+            
+            recent_count = cursor.fetchone()[0] if cursor.fetchone else 0
+            
+            if recent_count == 0:
                 from datetime import datetime, timedelta
                 current_time = datetime.now()
-                time_diff = current_time - last_updated.replace(tzinfo=None)
-                
-                if time_diff > timedelta(hours=max_age_hours):
-                    print(f"Snapshot muito antigo ({time_diff}). Reiniciando comparação.")
-                    return {}
+                time_diff = current_time - last_updated.replace(tzinfo=None) if last_updated else "N/A"
+                print(f"Snapshot muito antigo (diferença: {time_diff}). Reiniciando comparação.")
+                print(f"Dados no banco: {record_count}, Dados recentes: {recent_count}, Max age: {max_age_hours}h")
+                return {}
             
             # Carrega dados se estão atualizados
             cursor.execute(f"""

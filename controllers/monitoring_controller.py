@@ -185,7 +185,7 @@ class MonitoringController:
         
         return True
     
-    def start_monitoring(self, interval_minutes=3, max_age_hours=1):
+    def start_monitoring(self, interval_minutes=3, max_age_hours=24):
         """Inicia o loop principal de monitoramento"""
         
         if not self.initialize_system():
