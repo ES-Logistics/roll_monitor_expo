@@ -11,11 +11,11 @@ def save_snapshot_to_db(data_dict):
         cursor = conn.cursor()
         
         # Truncate da tabela (limpa dados anteriores)
-        cursor.execute("TRUNCATE TABLE bronze.roll_monitor_snapshot")
+        cursor.execute("TRUNCATE TABLE bronze.roll_monitor_expo_snapshot")
         
         # Insere novos dados
         insert_query = """
-            INSERT INTO bronze.roll_monitor_snapshot 
+            INSERT INTO bronze.roll_monitor_expo_snapshot 
             (unique_id, proceso, porto_embarque, navio_embarque, previsao_embarque, 
              previsao_embarque_feeder, navio_feeder, porto_feeder, 
              previsao_embarque_transbordo, porto_transbordo, navio_transbordo)
@@ -62,7 +62,7 @@ def load_snapshot_from_db():
             SELECT unique_id, proceso, porto_embarque, navio_embarque, previsao_embarque, 
                    previsao_embarque_feeder, navio_feeder, porto_feeder, 
                    previsao_embarque_transbordo, porto_transbordo, navio_transbordo
-            FROM bronze.roll_monitor_snapshot
+            FROM bronze.roll_monitor_expo_snapshot
         """)
         
         rows = cursor.fetchall()
@@ -98,7 +98,7 @@ def register_process_changes(proceso, changes_detail):
         
         # Verifica se o processo já tem registro
         cursor.execute(
-            "SELECT alteracoes FROM bronze.roll_monitor_changes WHERE proceso = %s",
+            "SELECT alteracoes FROM bronze.roll_monitor_expo_changes WHERE proceso = %s",
             (proceso,)
         )
         
@@ -124,7 +124,7 @@ def register_process_changes(proceso, changes_detail):
             
             # Atualiza registro existente e marca como PENDENTE
             cursor.execute("""
-                UPDATE bronze.roll_monitor_changes 
+                UPDATE bronze.roll_monitor_expo_changes 
                 SET alteracoes = %s, 
                     status_relatorio = 'PENDENTE',
                     updated_at = CURRENT_TIMESTAMP
@@ -141,7 +141,7 @@ def register_process_changes(proceso, changes_detail):
             }
             
             cursor.execute("""
-                INSERT INTO bronze.roll_monitor_changes (proceso, alteracoes, status_relatorio)
+                INSERT INTO bronze.roll_monitor_expo_changes (proceso, alteracoes, status_relatorio)
                 VALUES (%s, %s, 'PENDENTE')
             """, (proceso, json.dumps(new_alteracoes)))
         
@@ -164,7 +164,7 @@ def get_pending_changes():
         
         cursor.execute("""
             SELECT proceso, alteracoes, created_at, updated_at
-            FROM bronze.roll_monitor_changes 
+            FROM bronze.roll_monitor_expo_changes 
             WHERE status_relatorio = 'PENDENTE'
             ORDER BY updated_at DESC
         """)
@@ -198,7 +198,7 @@ def mark_changes_as_reported(processos_list):
         
         # Atualiza status para ENVIADO
         cursor.execute("""
-            UPDATE bronze.roll_monitor_changes 
+            UPDATE bronze.roll_monitor_expo_changes 
             SET status_relatorio = 'ENVIADO',
                 updated_at = CURRENT_TIMESTAMP
             WHERE proceso = ANY(%s)

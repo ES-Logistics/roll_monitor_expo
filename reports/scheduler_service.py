@@ -40,7 +40,7 @@ class SchedulerService:
         schedule.every().wednesday.at("14:00").do(self._execute_scheduled_report, time="14:00 UTC (11:00 BRT)")
         schedule.every().wednesday.at("19:00").do(self._execute_scheduled_report, time="19:00 UTC (16:00 BRT)")
         schedule.every().thursday.at("14:00").do(self._execute_scheduled_report, time="14:00 UTC (11:00 BRT)")
-        schedule.every().thursday.at("19:00").do(self._execute_scheduled_report, time="19:00 UTC (16:00 BRT)")
+        schedule.every().thursday.at("19:00").do(self._execute_scheduled_report, time="18:22 UTC (15:22 BRT)")
         schedule.every().friday.at("14:00").do(self._execute_scheduled_report, time="14:00 UTC (11:00 BRT)")
         schedule.every().friday.at("19:00").do(self._execute_scheduled_report, time="19:00 UTC (16:00 BRT)")
         

@@ -1,5 +1,5 @@
 """
-Sistema de Monitoramento de Processos Roll Monitor
+Sistema de Monitoramento de Processos Roll Monitor Exportação
 Aplicação principal que utiliza arquitetura modular com Controllers e Services
 """
 from controllers.monitoring_controller import MonitoringController

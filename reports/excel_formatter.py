@@ -18,16 +18,15 @@ class ExcelFormatter:
     
     # Definição das colunas do relatório
     COLUMNS = [
-        'Processo', 'Tipo Alteração', 'Cliente', 'Armador', 'Porto', 'Navio', 'Embarque',
-        'Embarque Feeder', 'Navio Feeder', 'Porto Feeder',
-        'Embarque Transbordo', 'Porto Transbordo', 'Navio Transbordo', 'Email Responsável',
-        'Versão', 'Quantidade de Alterações'
+        'Processo', 'Tipo Alteração', 'Cliente', 'Armador', 'Porto Embarque', 'Navio Embarque', 'Embarque',
+        'Porto Destino', 'Embarque Transbordo', 'Porto Transbordo', 'Navio Transbordo', 'Email Responsável',
+        'Motivo Transferência', 'Versão', 'Quantidade de Alterações'
     ]
     
     def __init__(self):
         self.workbook = Workbook()
         self.worksheet = self.workbook.active
-        self.worksheet.title = "Relatório de Alterações"
+        self.worksheet.title = "Relatorio Alteracoes"
         self.current_row = 1
         self.groups_created = []  # Lista para rastrear grupos criados
     
@@ -127,13 +126,12 @@ class ExcelFormatter:
             current_state.get('porto_embarque', ''),
             current_state.get('navio_embarque', ''),
             self._format_datetime(current_state.get('previsao_embarque')),
-            self._format_datetime(current_state.get('previsao_embarque_feeder')),
-            current_state.get('navio_feeder', ''),
-            current_state.get('porto_feeder', ''),
+            current_state.get('porto_destino', ''),
             self._format_datetime(current_state.get('previsao_embarque_transbordo')),
             current_state.get('porto_transbordo', ''),
             current_state.get('navio_transbordo', ''),
             current_state.get('email_responsavel', ''),
+            current_state.get('motivo_transferencia', ''),
             f".{version}" if version > 0 else "",
             total_changes
         ]
@@ -165,13 +163,12 @@ class ExcelFormatter:
             previous_values.get('porto_embarque', ''),
             previous_values.get('navio_embarque', ''),
             self._format_datetime(previous_values.get('previsao_embarque')),
-            self._format_datetime(previous_values.get('previsao_embarque_feeder')),
-            previous_values.get('navio_feeder', ''),
-            previous_values.get('porto_feeder', ''),
+            previous_values.get('porto_destino', ''),
             self._format_datetime(previous_values.get('previsao_embarque_transbordo')),
             previous_values.get('porto_transbordo', ''),
             previous_values.get('navio_transbordo', ''),
             previous_values.get('email_responsavel', ''),
+            previous_values.get('motivo_transferencia', ''),
             f".{version}",
             total_changes
         ]
@@ -198,13 +195,12 @@ class ExcelFormatter:
             original_values.get('porto_embarque', ''),
             original_values.get('navio_embarque', ''),
             self._format_datetime(original_values.get('previsao_embarque')),
-            self._format_datetime(original_values.get('previsao_embarque_feeder')),
-            original_values.get('navio_feeder', ''),
-            original_values.get('porto_feeder', ''),
+            original_values.get('porto_destino', ''),
             self._format_datetime(original_values.get('previsao_embarque_transbordo')),
             original_values.get('porto_transbordo', ''),
             original_values.get('navio_transbordo', ''),
             original_values.get('email_responsavel', ''),
+            original_values.get('motivo_transferencia', ''),
             ".0",  # Sempre versão 0
             total_changes
         ]
@@ -263,35 +259,53 @@ class ExcelFormatter:
         # NOTA: cliente, armador e email_responsavel NÃO triggam eventos de mudança
         # então não são incluídos no mapeamento para formatação
         mapping = {
-            5: 'porto_embarque',        # Coluna Porto
-            6: 'navio_embarque',        # Coluna Navio
+            5: 'porto_embarque',        # Coluna Porto Embarque
+            6: 'navio_embarque',        # Coluna Navio Embarque
             7: 'previsao_embarque',     # Coluna Embarque
-            8: 'previsao_embarque_feeder',  # Coluna Embarque Feeder
-            9: 'navio_feeder',          # Coluna Navio Feeder
-            10: 'porto_feeder',         # Coluna Porto Feeder
-            11: 'previsao_embarque_transbordo',  # Coluna Embarque Transbordo
-            12: 'porto_transbordo',     # Coluna Porto Transbordo
-            13: 'navio_transbordo'      # Coluna Navio Transbordo
-            # email_responsavel (coluna 14) não trigga mudanças
+            8: 'porto_destino',         # Coluna Porto Destino
+            9: 'previsao_embarque_transbordo',  # Coluna Embarque Transbordo
+            10: 'porto_transbordo',     # Coluna Porto Transbordo
+            11: 'navio_transbordo',     # Coluna Navio Transbordo
+            # email_responsavel (coluna 12) não trigga mudanças
+            13: 'motivo_transferencia'  # Coluna Motivo Transferência
         }
         return mapping.get(col_num, '')
     
     def _format_datetime(self, datetime_value):
         """Formata valores de data/hora para exibição (APENAS DATA)"""
-        if not datetime_value:
+        if not datetime_value or datetime_value == '' or datetime_value is None:
             return ""
         
         if isinstance(datetime_value, str):
             try:
-                # Tenta parsear string ISO format
-                dt = datetime.fromisoformat(datetime_value.replace('Z', '+00:00'))
-                return dt.strftime('%Y-%m-%d')  # APENAS DATA
+                # Remove timezone info se presente
+                datetime_str = datetime_value.replace('Z', '').replace('+00:00', '')
+                # Tenta parsear diferentes formatos
+                from datetime import datetime as dt
+                try:
+                    # Formato ISO completo
+                    parsed_dt = dt.fromisoformat(datetime_str)
+                except:
+                    try:
+                        # Formato só com data
+                        parsed_dt = dt.strptime(datetime_str[:10], '%Y-%m-%d')
+                    except:
+                        # Se não conseguir parsear, retorna a string original truncada
+                        return str(datetime_value)[:10] if len(str(datetime_value)) >= 10 else str(datetime_value)
+                
+                return parsed_dt.strftime('%Y-%m-%d')
+                
+            except Exception:
+                # Em caso de erro, retorna string segura
+                return str(datetime_value)[:10] if len(str(datetime_value)) >= 10 else str(datetime_value)
+                
+        elif hasattr(datetime_value, 'strftime'):
+            try:
+                return datetime_value.strftime('%Y-%m-%d')
             except:
                 return str(datetime_value)
-        elif hasattr(datetime_value, 'strftime'):
-            return datetime_value.strftime('%Y-%m-%d')  # APENAS DATA
         else:
-            return str(datetime_value)
+            return str(datetime_value) if datetime_value else ""
     
     def _get_border(self):
         """Define bordas padrão para células"""
@@ -310,11 +324,13 @@ class ExcelFormatter:
                 self.worksheet.column_dimensions[column_letter].width = 20
             elif col_num in [3, 4]:  # Cliente, Armador
                 self.worksheet.column_dimensions[column_letter].width = 25
-            elif col_num in [7, 8, 11]:  # Datas (Embarque, Embarque Feeder, Embarque Transbordo)
+            elif col_num in [7, 9]:  # Datas (Embarque, Embarque Transbordo)
                 self.worksheet.column_dimensions[column_letter].width = 15
-            elif col_num == 14:  # Email Responsável
+            elif col_num == 12:  # Email Responsável
                 self.worksheet.column_dimensions[column_letter].width = 30
-            elif col_num in [15, 16]:  # Versão e Quantidade
+            elif col_num == 13:  # Motivo Transferência
+                self.worksheet.column_dimensions[column_letter].width = 25
+            elif col_num in [14, 15]:  # Versão e Quantidade
                 self.worksheet.column_dimensions[column_letter].width = 10
             else:  # Porto, Navio, etc.
                 self.worksheet.column_dimensions[column_letter].width = 18

@@ -7,7 +7,7 @@ from services.datalake_connection import get_db_config
 class SnapshotRepository:
     
     def __init__(self):
-        self.table_name = "bronze.roll_monitor_snapshot"
+        self.table_name = "bronze.roll_monitor_expo_snapshot"
     
     def save_snapshot(self, data_dict):
         """Salva o snapshot atual no banco, substituindo os dados anteriores"""
@@ -23,10 +23,9 @@ class SnapshotRepository:
             insert_query = f"""
                 INSERT INTO {self.table_name} 
                 (unique_id, proceso, porto_embarque, navio_embarque, previsao_embarque, 
-                 previsao_embarque_feeder, navio_feeder, porto_feeder, 
                  previsao_embarque_transbordo, porto_transbordo, navio_transbordo,
-                 email_responsavel, armador, cliente)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                 porto_destino, email_responsavel, armador, cliente, motivo_transferencia)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             
             records_inserted = 0
@@ -38,15 +37,14 @@ class SnapshotRepository:
                     record.get('porto_embarque'),
                     record.get('navio_embarque'),
                     record.get('previsao_embarque'),
-                    record.get('previsao_embarque_feeder'),
-                    record.get('navio_feeder'),
-                    record.get('porto_feeder'),
                     record.get('previsao_embarque_transbordo'),
                     record.get('porto_transbordo'),
                     record.get('navio_transbordo'),
+                    record.get('porto_destino'),
                     record.get('email_responsavel'),
                     record.get('armador'),
-                    record.get('cliente')
+                    record.get('cliente'),
+                    record.get('motivo_transferencia')
                 ))
                 records_inserted += 1
             
@@ -101,9 +99,8 @@ class SnapshotRepository:
             # Carrega dados se estão atualizados
             cursor.execute(f"""
                 SELECT unique_id, proceso, porto_embarque, navio_embarque, previsao_embarque, 
-                       previsao_embarque_feeder, navio_feeder, porto_feeder, 
                        previsao_embarque_transbordo, porto_transbordo, navio_transbordo,
-                       email_responsavel, armador, cliente
+                       porto_destino, email_responsavel, armador, cliente, motivo_transferencia
                 FROM {self.table_name}
             """)
             

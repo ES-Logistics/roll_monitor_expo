@@ -26,7 +26,7 @@ def prepare_for_json(data):
 class ChangesRepository:
     
     def __init__(self):
-        self.table_name = "bronze.roll_monitor_changes"
+        self.table_name = "bronze.roll_monitor_expo_changes"
     
     def register_changes(self, proceso, changes_detail):
         """Registra ou atualiza as alterações de um processo"""

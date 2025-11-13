@@ -34,16 +34,16 @@ def send_report_by_email(report_path, target_emails, output_email):
         mail_controller = MailController()
         
         # Configurar dados do email
-        subject = f"Relatório Roll Monitor - {os.path.basename(report_path)}"
+        subject = f"Relatório Roll Monitor Exportação - {os.path.basename(report_path)}"
         body = f"""
         <html>
         <body>
-            <h2>📊 Relatório Roll Monitor</h2>
+            <h2>📊 Relatório Roll Monitor Exportação</h2>
             <p>Segue em anexo o relatório de monitoramento de processos.</p>
             <p><strong>Arquivo:</strong> {os.path.basename(report_path)}</p>
             <p><strong>Data de Geração:</strong> {os.path.getctime(report_path)}</p>
             <br>
-            <p><em>Este é um email automático do sistema Roll Monitor.</em></p>
+            <p><em>Este é um email automático do sistema Roll Monitor Exportação.</em></p>
         </body>
         </html>
         """
@@ -88,7 +88,8 @@ def send_report_by_email(report_path, target_emails, output_email):
 def show_menu():
     """Mostra menu de opções disponíveis"""
     print("\n" + "=" * 60)
-    print("📊 SISTEMA DE RELATÓRIOS EXCEL - ROLL MONITOR")
+    print("📊 SISTEMA DE RELATÓRIOS EXCEL - ROLL MONITOR EXPORTAÇÃO")
+    print("   🎯 MONITORA APENAS: navio_embarque e navio_transbordo")
     print("=" * 60)
     print("1. 📋 Verificar Status do Sistema")
     print("2. 📁 Listar Relatórios Gerados")
@@ -99,15 +100,21 @@ def show_menu():
     print("7. 🛑 Parar Relatórios Automáticos")
     print("8. ❌ Sair")
     print("=" * 60)
+    print("💡 IMPORTANTE: Apenas mudanças em navios geram relatórios")
+    print("=" * 60)
 
 def main():
     """Função principal do sistema de relatórios"""
     
     # ====== CONFIGURAÇÕES DE EMAIL ======
     target_mail = [
-        "taisa.weiss@eslogistics.com.br",
-        "guilherme.decker@eslogistics.com.br", 
-        "rodrigo@eslogistics.com.br"
+        "guilherme.decker@eslogistics.com.br",
+        "rodrigo@eslogistics.com.br",
+        "bianca.santos@esglobal.com.br",
+        "paola.sampaio@esglobal.com.br",
+        "rafael.eiccholz@esglobal.com.br",
+        "eduardo.pereira@esglobal.com.br",
+        "roger.santos@esglobal.com.br"
     ]  # Lista de emails de destino
     output_mail = "inputs_datalake@eslogistics.com.br"  # Email de origem
     # ====================================
@@ -115,7 +122,9 @@ def main():
     controller = ExcelReportController()
     
     print("🚀 Iniciando Sistema de Relatórios Excel...")
-    print("   Desenvolvido para monitoramento de processos Roll Monitor")
+    print("   Desenvolvido para monitoramento de processos Roll Monitor Exportação")
+    print("   🎯 Sistema monitora apenas: navio_embarque e navio_transbordo")
+    print("   🚫 Outros campos são ignorados para geração de relatórios")
     
     # Iniciar automaticamente na opção 4 (Relatórios Automáticos com Email)
     auto_start = True

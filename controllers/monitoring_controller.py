@@ -11,10 +11,33 @@ class MonitoringController:
     def __init__(self):
         self.monitoring_service = MonitoringService()
         self.query_service = QueryService()
+        # Campos que são monitorados para gerar relatórios
+        self.MONITORED_FIELDS = ['navio_embarque', 'navio_transbordo']
+    
+    def show_monitoring_config(self):
+        """Mostra configuração do que está sendo monitorado"""
+        print("\n" + "="*70)
+        print("🎯 CONFIGURAÇÃO DE MONITORAMENTO - ROLL MONITOR EXPORTAÇÃO")
+        print("="*70)
+        print("📊 CAMPOS MONITORADOS (geram relatório quando alterados):")
+        for field in self.MONITORED_FIELDS:
+            print(f"   ✅ {field}")
+        print("\n🚫 CAMPOS IGNORADOS (não geram relatório):")
+        ignored_fields = [
+            "porto_embarque", "previsao_embarque", "porto_destino",
+            "previsao_embarque_transbordo", "porto_transbordo", 
+            "email_responsavel", "armador", "cliente", "motivo_transferencia"
+        ]
+        for field in ignored_fields:
+            print(f"   ❌ {field}")
+        print("="*70)
+        print("💡 IMPORTANTE: Apenas mudanças em navios geram eventos de relatório!")
+        print("="*70)
     
     def initialize_system(self):
         """Inicializa o sistema e as tabelas do banco"""
-        print("Inicializando sistema de monitoramento...")
+        self.show_monitoring_config()
+        print("\n🚀 Inicializando sistema de monitoramento...")
         
         result = self.query_service.initialize_database_tables()
         
@@ -28,6 +51,10 @@ class MonitoringController:
     def compare_data(self, current_data, previous_data):
         """Compara dados atual com anterior e identifica mudanças"""
         
+        print(f"\n🔍 DEBUG - Iniciando comparação:")
+        print(f"   📊 Dados atuais: {len(current_data)} registros")
+        print(f"   📚 Dados anteriores: {len(previous_data)} registros")
+        
         # Primeiro, limpa as marcações de mudança de todos os registros atuais
         for unique_id in current_data:
             current_data[unique_id]['OBS'] = ''
@@ -36,6 +63,37 @@ class MonitoringController:
         changes_detected = {}  # Armazena mudanças por processo
         
         # Compara apenas registros que existem em ambas as execuções
+        common_records = set(current_data.keys()) & set(previous_data.keys())
+        print(f"   🔗 Registros em comum para comparação: {len(common_records)}")
+        
+        # Debug: Vamos verificar se o processo específico está sendo comparado
+        target_process = "EM09438/25"
+        target_found_current = False
+        target_found_previous = False
+        target_unique_id = None
+        
+        for unique_id in current_data:
+            if target_process in current_data[unique_id].get('proceso', ''):
+                target_found_current = True
+                target_unique_id = unique_id
+                print(f"   🎯 DEBUG - Processo {target_process} encontrado nos dados atuais: {unique_id}")
+                break
+                
+        for unique_id in previous_data:
+            if target_process in previous_data[unique_id].get('proceso', ''):
+                target_found_previous = True
+                print(f"   🎯 DEBUG - Processo {target_process} encontrado nos dados anteriores: {unique_id}")
+                break
+        
+        if target_found_current and target_found_previous:
+            print(f"   ✅ DEBUG - Processo {target_process} será comparado")
+        elif target_found_current and not target_found_previous:
+            print(f"   ⚠️  DEBUG - Processo {target_process} é NOVO (não estava nos dados anteriores)")
+        elif not target_found_current and target_found_previous:
+            print(f"   ⚠️  DEBUG - Processo {target_process} foi REMOVIDO (não está nos dados atuais)")
+        else:
+            print(f"   ❌ DEBUG - Processo {target_process} NÃO encontrado em nenhum conjunto de dados")
+        
         for unique_id in current_data:
             if unique_id in previous_data:
                 changed_fields = []
@@ -44,9 +102,19 @@ class MonitoringController:
                 previous_record = previous_data[unique_id]
                 proceso = current_record['proceso']
                 
-                # Compara cada campo (exceto campos de controle)
-                for field in current_record:
-                    if field not in ['OBS', 'CHANGES_DETAIL']:
+                # NOVA LÓGICA: Compara APENAS campos monitorados
+                # Campos que geram gatilho para relatório
+                
+                # Debug específico para o processo target
+                is_target_process = target_process in proceso
+                if is_target_process:
+                    print(f"   🔍 DEBUG - Analisando processo {proceso} (unique_id: {unique_id})")
+                    print(f"        Dados atuais: navio_embarque={current_record.get('navio_embarque')}, navio_transbordo={current_record.get('navio_transbordo')}")
+                    print(f"        Dados anteriores: navio_embarque={previous_record.get('navio_embarque')}, navio_transbordo={previous_record.get('navio_transbordo')}")
+                
+                # Compara apenas os campos monitorados
+                for field in self.MONITORED_FIELDS:
+                    if field in current_record:
                         current_value = current_record[field]
                         previous_value = previous_record.get(field)
                         
@@ -62,6 +130,15 @@ class MonitoringController:
                                 'anterior': previous_value,
                                 'atual': current_value
                             }
+                            print(f"🔄 Mudança detectada - Processo: {proceso}, Campo: {field}, "
+                                  f"Anterior: '{previous_value}' → Atual: '{current_value}'")
+                        else:
+                            # Debug para campos que NÃO mudaram no processo target
+                            if is_target_process:
+                                print(f"        ✅ Campo {field}: SEM MUDANÇA ('{previous_value}' = '{current_value}')")
+                    else:
+                        if is_target_process:
+                            print(f"        ❌ Campo {field} não encontrado nos dados atuais")
                 
                 # Se houve mudanças, registra no banco e marca no dict atual
                 if changed_fields:
@@ -95,6 +172,15 @@ class MonitoringController:
         # Registros novos e removidos
         new_records = set(current_data.keys()) - set(previous_data.keys())
         removed_records = set(previous_data.keys()) - set(current_data.keys())
+        
+        print(f"\n📋 DEBUG - Resumo da comparação:")
+        print(f"   🔄 Processos com mudanças detectadas: {len(changes_detected)}")
+        print(f"   📝 Mudanças registradas no banco: {registered_changes}")
+        print(f"   ➕ Novos registros: {len(new_records)}")
+        print(f"   ➖ Registros removidos: {len(removed_records)}")
+        
+        if len(changes_detected) > 0:
+            print(f"   📌 Processos alterados: {list(changes_detected.keys())}")
         
         return {
             'changes_detected': len(changes_detected),
@@ -166,6 +252,13 @@ class MonitoringController:
         # Carrega dados anteriores do banco (considerando idade máxima)
         snapshot_result = self.monitoring_service.load_previous_snapshot(max_age_hours)
         previous_data = snapshot_result['data']
+        
+        print(f"\n🔍 DEBUG - Carregamento de snapshot:")
+        print(f"   📈 Max age permitido: {max_age_hours} horas")
+        print(f"   ✅ Snapshot carregado com sucesso: {snapshot_result['success']}")
+        print(f"   📊 Registros no snapshot anterior: {len(previous_data)}")
+        if 'message' in snapshot_result:
+            print(f"   💬 Mensagem: {snapshot_result['message']}")
         
         comparison_result = None
         

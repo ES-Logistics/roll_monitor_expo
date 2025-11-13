@@ -9,18 +9,17 @@ class QueryService:
     def __init__(self):
         self.query1 = '''
 select  mov.ds_movimento as proceso, 
-                    loc.nm_localidade as porto_embarque,
-                    nav.nm_navio  as navio_embarque,
                     mov.dt_previsao_saida as previsao_embarque,
-                    mov.dt_previsao_emb_feeder as previsao_embarque_feeder,
-                    navfee.nm_navio as navio_feeder,
-                    locfee.nm_localidade as porto_feeder,
+                    loc.nm_localidade as porto_embarque,
+                    desloc.nm_localidade as porto_destino,
+					nav.nm_navio  as navio_embarque,
                     trc.dt_previsao_saida as previsao_embarque_transbordo,
                     loctra.nm_localidade as porto_transbordo,
                     navtra.nm_navio as navio_transbordo,
                     usr.ds_email as email_responsavel,
                     pes.nm_fantasia as armador,
-                    pescli.nm_fantasia as cliente
+                    pescli.nm_fantasia as cliente,
+                    mot.ds_motivo as motivo_transferencia
             from bronze.skyline_es_ocs_movimento mov
             left join bronze.skyline_es_ocs_servico as srv
             on srv.cd_movimento = mov.cd_movimento
@@ -40,11 +39,15 @@ select  mov.ds_movimento as proceso,
             on mov.cd_navio_feeder = navfee.cd_navio 
             left join bronze.skyline_es_loc_localidade as loc
             on mov.cd_origem = loc.cd_localidade 
+            left join bronze.skyline_es_loc_localidade as desloc
+            on mov.cd_destino = desloc.cd_localidade
             left join bronze.skyline_es_tab_navio as nav
             on nav.cd_navio =mov.cd_navio 
             left join bronze.skyline_es_pes_pessoa as pescli
-            on pescli.cd_pessoa = mov.cd_cliente
-            where mov.ds_movimento ilike 'IM%'
+            on pescli.cd_pessoa = mov.cd_intermediario
+            left join bronze.skyline_es_tab_motivo as mot
+            on mot.cd_motivo = mov.cd_motivo_transferencia 
+            where mov.ds_movimento ilike 'EM%'
             and mov.dt_previsao_saida is not null
             and mov.dt_confirmacao_saida is null
             and mov.dt_fechamento is null 
@@ -85,13 +88,12 @@ select  mov.ds_movimento as proceso,
                 # Usa campos que realmente diferenciam os registros
                 porto_embarque = str(row_dict.get('porto_embarque', 'NULL'))
                 navio_embarque = str(row_dict.get('navio_embarque', 'NULL'))
-                porto_feeder = str(row_dict.get('porto_feeder', 'NULL'))
-                navio_feeder = str(row_dict.get('navio_feeder', 'NULL'))
+                porto_destino = str(row_dict.get('porto_destino', 'NULL'))
                 porto_transbordo = str(row_dict.get('porto_transbordo', 'NULL'))
                 navio_transbordo = str(row_dict.get('navio_transbordo', 'NULL'))
                 
-                # ID único baseado na combinação de dados que realmente diferencia os registros
-                unique_id = f"{proceso}_{porto_embarque}_{navio_embarque}_{porto_feeder}_{navio_feeder}_{porto_transbordo}_{navio_transbordo}"
+                # ID único baseado apenas no processo (único identificador que não muda)
+                unique_id = proceso
                 
                 # Adiciona todas as colunas mantendo 'proceso' original
                 data_dict[unique_id] = {}

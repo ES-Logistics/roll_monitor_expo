@@ -12,8 +12,8 @@ class ReportRepository:
     """Repository para consultas e operações de relatório"""
     
     def __init__(self):
-        self.changes_table = "bronze.roll_monitor_changes"
-        self.snapshot_table = "bronze.roll_monitor_snapshot"
+        self.changes_table = "bronze.roll_monitor_expo_changes"
+        self.snapshot_table = "bronze.roll_monitor_expo_snapshot"
     
     def get_pending_changes(self):
         """Busca todos os processos com status PENDENTE para relatório"""
@@ -67,9 +67,8 @@ class ReportRepository:
         """Busca o estado atual de um processo no snapshot"""
         cursor.execute(f"""
             SELECT proceso, porto_embarque, navio_embarque, previsao_embarque,
-                   previsao_embarque_feeder, navio_feeder, porto_feeder,
                    previsao_embarque_transbordo, porto_transbordo, navio_transbordo,
-                   email_responsavel, armador, cliente
+                   porto_destino, email_responsavel, armador, cliente, motivo_transferencia
             FROM {self.snapshot_table}
             WHERE proceso = %s
         """, (proceso,))
@@ -79,9 +78,8 @@ class ReportRepository:
             return None
         
         columns = ['proceso', 'porto_embarque', 'navio_embarque', 'previsao_embarque',
-                  'previsao_embarque_feeder', 'navio_feeder', 'porto_feeder',
                   'previsao_embarque_transbordo', 'porto_transbordo', 'navio_transbordo',
-                  'email_responsavel', 'armador', 'cliente']
+                  'porto_destino', 'email_responsavel', 'armador', 'cliente', 'motivo_transferencia']
         
         return dict(zip(columns, row))
     

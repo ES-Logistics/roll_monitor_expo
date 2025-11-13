@@ -213,7 +213,7 @@ class MailController:
                         }
                     ]
                 },
-                "saveToSentItems": "false"
+                "saveToSentItems": "true"
             }
             
             # Debug: Mostrar tamanho do anexo
