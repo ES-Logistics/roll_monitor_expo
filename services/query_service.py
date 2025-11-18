@@ -120,32 +120,3 @@ select  mov.ds_movimento as proceso,
                 'error': str(e),
                 'message': f"Erro ao executar query: {e}"
             }
-    
-    def initialize_database_tables(self):
-        """Inicializa as tabelas se ainda não existirem"""
-        conn = self.connect_to_database()
-        
-        try:
-            cursor = conn.cursor()
-            
-            # Lê e executa o script de criação das tabelas
-            with open('create_tables.sql', 'r', encoding='utf-8') as f:
-                sql_script = f.read()
-            
-            cursor.execute(sql_script)
-            conn.commit()
-            return {
-                'success': True,
-                'message': "Tabelas inicializadas com sucesso"
-            }
-            
-        except Exception as e:
-            conn.rollback()
-            return {
-                'success': False,
-                'error': str(e),
-                'message': f"Erro ao inicializar tabelas: {e}"
-            }
-        finally:
-            cursor.close()
-            conn.close()

@@ -38,15 +38,7 @@ class MonitoringController:
         """Inicializa o sistema e as tabelas do banco"""
         self.show_monitoring_config()
         print("\n🚀 Inicializando sistema de monitoramento...")
-        
-        result = self.query_service.initialize_database_tables()
-        
-        if result['success']:
-            print(result['message'])
-            return True
-        else:
-            print(f"Erro na inicialização: {result['message']}")
-            return False
+        self.start_monitoring()
     
     def compare_data(self, current_data, previous_data):
         """Compara dados atual com anterior e identifica mudanças"""
@@ -280,9 +272,6 @@ class MonitoringController:
     
     def start_monitoring(self, interval_minutes=3, max_age_hours=24):
         """Inicia o loop principal de monitoramento"""
-        
-        if not self.initialize_system():
-            return
         
         print(f"Iniciando monitoramento de processos (intervalo: {interval_minutes} minutos, idade máxima: {max_age_hours}h)...")
         
