@@ -51,7 +51,6 @@ select  mov.ds_movimento as proceso,
             and mov.dt_previsao_saida is not null
             and mov.dt_confirmacao_saida is null
             and mov.dt_fechamento is null 
-            and trc.dt_confirmacao_saida is null
             and srv.cd_servico =1
         '''
     
