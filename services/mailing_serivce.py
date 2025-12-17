@@ -4,6 +4,7 @@ import logging
 import base64
 import pandas as pd
 import io
+from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -205,21 +206,23 @@ class MailReport:
         if row["status"] != "ACTIVE":
             return False
 
-        now = datetime.now()
+        tz = ZoneInfo("America/Sao_Paulo")
+        now = datetime.now(tz)
+
         last_sent = row["last_sent"]
+        if last_sent and last_sent.tzinfo is None:
+            last_sent = last_sent.replace(tzinfo=tz)
 
         for run in config.RUNS:
             run_time = datetime.strptime(run, "%H:%M").time()
-            slot_start = datetime.combine(now.date(), run_time)
+
+            slot_start = datetime.combine(now.date(), run_time, tzinfo=tz)
             slot_end = slot_start + timedelta(minutes=config.WINDOW_MINUTES)
 
-            # estamos dentro da janela?
             if slot_start <= now <= slot_end:
-                # nunca foi enviado
                 if last_sent is None:
                     return True
 
-                # já enviou hoje nesse slot?
                 if last_sent < slot_start:
                     return True
 
