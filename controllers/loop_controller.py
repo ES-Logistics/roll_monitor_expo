@@ -110,11 +110,18 @@ class Loop:
                         "old": v_old,
                         "new": v_new
                     }
-
+            #verificar se a mudança é de previsão ou previsão transbordo, se for, só entra se "motivo_alteracao" tiver preenchido, se não, ignora
             if row_diff:
-                diffs["changed"].append({
-                    "key": k,
-                    "diff": row_diff
-                })
-
+                if "previsao_embarque" in row_diff or "previsao_embarque_transbordo" in row_diff:
+                    motivo = new.get("motivo_alteracao")
+                    if motivo and motivo.strip() != "":
+                        diffs["changed"].append({
+                            "key": k,
+                            "diff": row_diff
+                        })
+                else:
+                    diffs["changed"].append({
+                        "key": k,
+                        "diff": row_diff
+                    })
         return diffs

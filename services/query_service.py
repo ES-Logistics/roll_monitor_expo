@@ -356,6 +356,7 @@ class QueryService:
             conn.close()
 
     def get_diffs_from_db(self):
+
         conn = psycopg2.connect(**DB_CONFIG_LAKEHOUSE)
         try:
             with conn.cursor() as cursor:
