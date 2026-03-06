@@ -295,3 +295,4 @@ class MailReport:
                     subject=self.subject,
                     html_content="Segue em anexo o relatório de alterações do Roll Monitor Exportação.",
                     attachments=[attachment])
+            

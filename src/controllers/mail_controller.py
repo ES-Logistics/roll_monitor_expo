@@ -320,3 +320,4 @@ class EmailManager:
             if 'response' in locals() and hasattr(response, 'text'):
                 logger.error(f"[MAIL] Conteúdo da resposta: {response.text}")
             return False
+        
