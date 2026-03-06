@@ -2,7 +2,7 @@ psycopg2-binary
 sqlalchemy
 pandas
 openpyxl
-schedule
+python-dotenv
 cryptography
 PyJWT
 requests
