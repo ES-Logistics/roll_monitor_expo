@@ -40,7 +40,7 @@ with DAG(
 
     run_monitor = DockerOperator(
         task_id="run_monitor",
-        image="roll-monitor-expo:latest",
+        image="roll_monitor_expo:latest",
         force_pull=True,
         api_version="auto",
         auto_remove="force",
