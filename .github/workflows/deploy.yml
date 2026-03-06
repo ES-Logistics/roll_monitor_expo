@@ -36,7 +36,7 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
 
         # Pegar os arquivos locais das DAGs
-        source: "dags/roll_monitor_expo_dag.py"
+        source: "dags/roll_monitor_dag.py,dags/roll_monitor_report_dag.py"
         target: "/home/ubuntu/projects/data-platform/dags/"
         strip_components: 1
         
