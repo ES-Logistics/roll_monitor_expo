@@ -1,11 +1,10 @@
 import time
-import config
 import logging
 import base64
 import pandas as pd
 import io
-from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta
+import config
+
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
@@ -192,42 +191,6 @@ class MailReport:
         final_output.seek(0)
 
         return final_output.read()
-
-    def should_send_report(self):
-        result = self.queries.run_query(
-            "SELECT status, last_sent FROM bronze.d_roll_monitor_expo_mailing LIMIT 1"
-        )
-
-        if not result:
-            return False
-
-        row = result[0]
-
-        if row["status"] != "ACTIVE":
-            return False
-
-        tz = ZoneInfo("America/Sao_Paulo")
-        now = datetime.now(tz)
-
-        last_sent = row["last_sent"]
-        if last_sent and last_sent.tzinfo is None:
-            last_sent = last_sent.replace(tzinfo=tz)
-
-        for run in config.RUNS:
-            run_time = datetime.strptime(run, "%H:%M").time()
-
-            slot_start = datetime.combine(now.date(), run_time, tzinfo=tz)
-            slot_end = slot_start + timedelta(minutes=config.WINDOW_MINUTES)
-
-            if slot_start <= now <= slot_end:
-                if last_sent is None:
-                    return True
-
-                if last_sent < slot_start:
-                    return True
-
-        return False
-
 
     def send(self):
         content = self.queries.get_diffs_from_db()

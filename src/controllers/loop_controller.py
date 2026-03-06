@@ -1,67 +1,32 @@
 import logging
-import time
 import json
 import config
-from services.mailing_serivce import MailReport
 from services.query_service import QueryService
 
-class Loop:
+class Monitor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
-        self.queries= QueryService()
-        self.report = MailReport()
+        self.queries = QueryService()
 
-        
-    def start_loop(self):
-        self.logger.info("Loop iniciado.")
-        
-        current_data = []
-        older_data = []
-        try:
-            while True:
-                self.logger.info("Executando iteração do loop.")
-                if older_data == []:
-                    older_data = self.queries.snapshot_control()
-                    current_data = older_data
-                else:
-                    current_data = self.queries.run_query()
-                
-                #chama comparação
-                self.logger.info("Comparando dados atuais com dados anteriores.")
-                result =self.diff_by_key(older_data, current_data, 'processo', config.COLS_COMPARE)
-                
-                #printa comparação se houver mudanças
-                if result['added'] or result['removed'] or result['changed']:
-                    self.logger.info(f"Alterações detectadas: {json.dumps(result, indent=2, default=str, ensure_ascii=False)}")
-                    #atualiza older_data apenas se tiver mudança, se não não precisa
-                else:
-                    self.logger.info("Nenhuma alteração detectada.")
-                
-                #atualiza snapshot e older_data
-                older_data = current_data
-                self.queries.update_snapshot()
-                
-                #adiciona mudanças ao banco
-                self.queries.save_diffs_to_db(result["changed"])
+    def run(self):
+        self.logger.info("Iniciando ciclo de monitoramento.")
 
-                #remove os processos que sumiram do monitoramento
-                self.queries.remove_diffs_from_db(result["removed"])
-                if self.report.should_send_report():
-                    self.logger.info("[LOOP] Hora de enviar relatório de email.")
-                    self.report.send()
-                    self.queries.mark_report_as_sent()
-                else:
-                    self.logger.info("[LOOP] Ainda não é hora de enviar email.")
-                self.logger.info("Iteração do loop concluída. Aguardando próxima execução.")
-                time.sleep(config.MONITORING_INTERVAL_SECONDS)  
+        older_data = self.queries.snapshot_control()
+        current_data = self.queries.run_query()
 
-        except Exception as e:
-            self.logger.error(f"Erro no loop: {e}")
-        except KeyboardInterrupt:
-            self.logger.info("Loop interrompido pelo usuário.")
-        finally:
-            self.logger.info("Loop finalizado.")
+        self.logger.info("Comparando dados atuais com dados anteriores.")
+        result = self.diff_by_key(older_data, current_data, 'processo', config.COLS_COMPARE)
+
+        if result['added'] or result['removed'] or result['changed']:
+            self.logger.info(f"Alterações detectadas: {json.dumps(result, indent=2, default=str, ensure_ascii=False)}")
+        else:
+            self.logger.info("Nenhuma alteração detectada.")
+
+        self.queries.update_snapshot()
+        self.queries.save_diffs_to_db(result["changed"])
+        self.queries.remove_diffs_from_db(result["removed"])
+
+        self.logger.info("Ciclo de monitoramento concluído.")
 
 
     def diff_by_key(self, old_list, new_list, key, cols):
