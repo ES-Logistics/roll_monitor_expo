@@ -10,7 +10,7 @@ from airflow.models import Variable
 
 
 LOCAL_TIMEZONE = pendulum.timezone("America/Sao_Paulo")
-ENV_VARS = Variable.get("ROLL_MONITOR_ENV", deserialize_json=True, default_var={})
+ENV_VARS = Variable.get("ROLL_MONITOR_EXPO_ENV", deserialize_json=True, default_var={})
 
 DEFAULT_ARGS = {
     "owner": "ES Logistics",
